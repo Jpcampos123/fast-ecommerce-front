@@ -30,8 +30,15 @@
   const { data, pending, error, refresh: refreshEstimate } = await useEstimate()
 
   async function handleEstimateFreight(value) {
+    if (!value || value.trim() === '') {
+      messageInvalidCEP.value = t('checkout.shipping.form.zipcodeInvalid')
+      validationCEP.value = 'error'
+      getCart.value.zipcode = value
+      return
+    }
     await cartStore.calculateFreight(value, unref(checkedFreightProductCode))
-    await refreshEstimate()
+    const cartItems = cart.value?.cart_items
+    await refreshEstimate(cartItems)
     if (unref(error)) {
       handleFreightError(unref(error))
       return
@@ -43,14 +50,13 @@
 
   function handleFreightError(error) {
     if (unref(error) === 'INVALID_CEP') {
-      messageInvalidCEP.value = 'CEP Inválido'
+      messageInvalidCEP.value = t('checkout.shipping.form.zipcodeInvalid')
       validationCEP.value = 'error'
       cartStore.clearFreight()
     } else {
       notification.error({
-        title: 'Erro',
-        content:
-          'Algo deu errado ao calcular o frete. Tente novamente mais tarde.',
+        title: t('register.notification.validationCep.error.title'),
+        content: t('register.notification.validationCep.error.contentFreight'),
         duration: 2500,
       })
     }
@@ -61,7 +67,8 @@
     await refreshEstimate()
     if (unref(error) === 'INVALID_COUPON') {
       validationCoupon.value = 'error'
-      messageInvalidCoupon.value = 'Cupom Inválido'
+      messageInvalidCoupon.value = t('checkout.shipping.form.invalidCoupon')
+      
       await cartStore.clearDiscount()
       await cartStore.setCoupon('')
       return
@@ -74,15 +81,20 @@
   const debounceFn = useDebounceFn(
     async () => {
       const cartItems = cart.value?.cart_items
+      const zipcode = cart.value?.zipcode
       if (!cartItems) {
         return
       }
       await refreshEstimate(cartItems)
+      if (zipcode) {
+        await handleEstimateFreight(zipcode)
+      }
 
       if (unref(data)?.detail === 'Product Sold Out.') {
         notification.error({
-          title: 'Erro',
-          content: 'A quantidade solicitada não está disponível no estoque.',
+          title: t('register.notification.validationCep.error.title'),
+          content: t('register.notification.validationCep.error.contentStock'),
+
           duration: 2500,
         })
       }
@@ -95,13 +107,34 @@
     debounceFn()
   }
 
-  function handleRemoveItem(productId) {
+  async function handleRemoveItem(productId: number) {
     cartStore.removeItem(productId)
-    refreshEstimate()
+    const cartItems = cart.value?.cart_items
+
+    await refreshEstimate(cartItems)
   }
 
-  function handleRadioChange(value) {
+  async function handleRadioChange(value) {
     checkedFreightProductCode.value = value
+
+    await handleEstimateFreight(getCart.value.zipcode)
+  }
+
+
+  function currencyFormatFreight(
+    value: number,
+    locale = 'pt-BR',
+    type?: string,
+  ): string {
+    if (value === 0.01 && type === 'freight') {
+      return t('config.free')
+
+    }
+
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value)
   }
 
   watch(
@@ -127,6 +160,13 @@
       currencyFormat(item.price)
     )
   }
+
+  const formattedTotal = computed(() => {
+    return validationCEP.value === 'error'
+      ? 0
+    : currencyFormat(cart.value?.total)
+
+  })
 </script>
 
 <template>
@@ -178,7 +218,14 @@
                 {{ t('cart.freight.part2') }}
               </div>
               <div>
-                {{ currencyFormat(cart.freight.price, undefined, 'freight') }}
+                {{
+
+                  currencyFormatFreight(
+                    Number(cart.freight.price),
+                    undefined,
+                    'freight',
+                  )
+                }}
               </div>
             </div>
           </InputCard>
@@ -264,8 +311,16 @@
               <p>{{ t('cart.summary.shipping') }}</p>
               <p>
                 {{
-                  currencyFormat(cart?.freight?.price, undefined, 'freight') ||
-                  0
+
+                  cart?.freight?.price !== undefined &&
+                  cart?.freight?.price !== null
+                    ? currencyFormatFreight(
+                        Number(cart.freight.price),
+                        undefined,
+                        'freight',
+                      )
+                    : currencyFormat(0)
+
                 }}
               </p>
             </div>
@@ -273,10 +328,10 @@
 
             <div class="summary-values amount">
               <p>{{ t('cart.summary.total') }}</p>
-              <p>{{ currencyFormat(cart.total) }}</p>
+              <p>{{ formattedTotal }}</p>
             </div>
 
-            <p v-if="!getCart?.freight?.price" class="alert-freight">
+            <p v-if="!formattedTotal" class="alert-freight">
               Calcule o frete para finalizar a compra
             </p>
             <nuxt-link v-else to="/checkout">

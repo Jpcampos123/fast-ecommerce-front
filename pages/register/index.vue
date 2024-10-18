@@ -16,6 +16,8 @@
   })
 
   const { register } = useAuthStore()
+  const config = useRuntimeConfig()
+  const recaptchaKey = config.public.recaptchaKey
   const router = useRouter()
   const { t } = useI18n()
 
@@ -25,7 +27,9 @@
         name: z.string().nonempty(t('register.formValidation.requiredName')),
         username: z
           .string()
-          .nonempty(t('register.formValidation.requiredUsername')),
+          .nonempty(t('register.formValidation.requiredUsername'))
+          .regex(/^[a-z0-9]+$/, t('register.formValidation.invalidUsername'))
+          .transform((val) => val.toLowerCase()),
         mail: z
           .string()
           .email(t('register.formValidation.invalidEmail'))
@@ -88,7 +92,8 @@
 
   const onSubmit = handleSubmit(async (values) => {
     const res = await register(values)
-    if (!res?.success) {
+    const token = await grecaptcha.execute(recaptchaKey, { action: 'submit' })
+    if (!res?.success && !token) {
       notification.error({
         title: t('register.notification.error.title'),
         content: t('register.notification.error.content'),
