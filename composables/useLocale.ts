@@ -1,4 +1,4 @@
-import { useCookie } from '#app'
+import { useCookie, useState } from '#imports'
 
 export const supportedFlags = ['br', 'us', 'es', 'pt'] as const
 export type SupportedFlag = (typeof supportedFlags)[number]

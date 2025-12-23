@@ -1,4 +1,4 @@
-import { LOCALES, STATUS_ORDER } from './enums'
+import { LOCALES, STATUS_ORDER, CURRENCY_MAP } from './enums'
 import { ref, useRoute, useLocaleFromCookie } from '#imports'
 
 export function currencyFormat(

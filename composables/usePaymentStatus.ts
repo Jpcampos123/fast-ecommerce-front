@@ -1,3 +1,5 @@
+import { ref, computed, useCartStore } from '#imports'
+
 interface IConfig {
   onSuccess(): void
   onError(): void

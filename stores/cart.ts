@@ -17,6 +17,7 @@ import {
   useCookie,
   useFetch,
   useNuxtApp,
+  useRuntimeConfig,
   type CreditCard,
 } from '#imports'
 import type { AddPixPaymentMehodResponse } from '~/types/cart'
@@ -89,6 +90,9 @@ export const useCartStore = defineStore('cart', () => {
       email: '',
       phone: '',
       document: '',
+      fullName: '',
+      role: null,
+      addresses: [],
     },
   })
 

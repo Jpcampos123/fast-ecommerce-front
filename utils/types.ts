@@ -139,6 +139,8 @@ export type User = {
   email: string
   document: string
   phone: string
+  fullName: string
+  role: string | null
   addresses: Address[]
 }
 
