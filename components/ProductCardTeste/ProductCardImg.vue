@@ -246,28 +246,49 @@
   }
 
   @media (max-width: 640px) {
+    .product-row {
+      gap: 0.75rem;
+      padding: 0.5rem;
+      justify-content: flex-start;
+    }
     .product-card {
-      flex: 0 0 65%;
-      height: 380px;
-      padding: 0.9rem;
+      flex: 0 0 42%;
+      height: 290px;
+      padding: 0.5rem;
     }
 
     .image-wrapper {
-      height: 200px;
+      height: 130px;
+      margin-bottom: 0.5rem;
     }
 
     .product-title {
-      font-size: 0.95rem;
-      min-height: 2.4em;
+      font-size: 0.85rem;
+      min-height: 2.8em;
+      line-height: 1.2em;
+      margin: 0.25rem 0;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      display: block;
+      min-height: auto;
     }
 
     .product-price {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      margin: 0.25rem 0 0.5rem 0;
+      min-height: auto;
+    }
+    .buy-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      width: 100%;
     }
 
-    .buy-button {
-      padding: 0.55rem 1.2rem;
-      font-size: 0.9rem;
+    .out-of-stock-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
     }
   }
 </style>
