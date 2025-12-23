@@ -1,5 +1,21 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#!/bin/sh
+set -e
+echo "Running Husky pre-commit..."
 
-npm test
-npx lint-staged
+# Run tests
+if [ -f "./node_modules/.bin/vitest" ]; then
+  echo "Running vitest from node_modules..."
+  ./node_modules/.bin/vitest run
+else
+  npm test
+fi
+
+# Run lint-staged
+if [ -f "./node_modules/.bin/lint-staged" ]; then
+  echo "Running lint-staged from node_modules..."
+  ./node_modules/.bin/lint-staged
+else
+  npx lint-staged
+fi
+
+echo "Husky pre-commit finished successfully!"

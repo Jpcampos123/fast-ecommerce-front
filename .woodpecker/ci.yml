@@ -1,0 +1,28 @@
+steps:
+  install:
+    image: node:24
+    commands:
+      - npm install
+
+  prettier:
+    image: node:24
+    commands:
+      - npx prettier --check .
+
+  lint-staged:
+    image: node:24
+    commands:
+      - npx lint-staged
+
+  test:
+    image: node:24
+    commands:
+      - npm run test:ci
+
+  sonar:
+    image: sonarsource/sonar-scanner-cli
+    environment:
+      SONAR_TOKEN:
+        from_secret: sonar_token
+    commands:
+      - sonar-scanner
