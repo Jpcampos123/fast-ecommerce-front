@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import Components from 'unplugin-vue-components/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import { LOCALES } from './utils/enums'
@@ -7,10 +8,19 @@ const { VITEST, NODE_ENV, SERVER_BASE_URL } = process.env
 const transpileNaive = NODE_ENV === 'production' || VITEST !== undefined
 
 export default defineNuxtConfig({
+  routeRules: {
+    '/api/proxy/**': {
+      proxy: 'https://api.gattorosa.com.br/**',
+    },
+  },
   imports: {
     autoImport: true,
   },
+  css: ['vue3-flag-icons/styles'],
   ssr: false,
+  nitro: {
+    preset: 'node-server',
+  },
   head: {
     __dangerouslyDisableSanitizers: ['script'],
     script: [
@@ -39,10 +49,22 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-gtag',
   ],
+
   i18n: {
     baseUrl: process.env.I18N_BASE_URL,
-    locales: [{ iso: 'pt-BR', code: LOCALES.PT_BR }],
+    strategy: 'no_prefix',
+    locales: [
+      { language: 'pt-BR', code: LOCALES.PT_BR },
+      { language: 'en-US', code: LOCALES.EN_US },
+      { language: 'pt-PT', code: LOCALES.PT_PT },
+      { language: 'es-ES', code: LOCALES.ES_ES },
+    ],
     defaultLocale: LOCALES.PT_BR,
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      fallbackLocale: LOCALES.PT_BR,
+    },
     vueI18n: './i18n.config.ts',
   },
   googleFonts: {
@@ -85,7 +107,8 @@ export default defineNuxtConfig({
     { src: '@/plugins/vue-tel-input', mode: 'client' },
     { src: '@/plugins/vue-the-mask', mode: 'client' },
     { src: '@/plugins/mercadopago', mode: 'client' },
-    { src: '@/plugins/talkto', mode: 'client' },
+    { src: '@/plugins/whatsapp', mode: 'client' },
+    { src: '@/plugins/dompurify', mode: 'client' },
   ],
   build: {
     analyze: true,
@@ -96,8 +119,12 @@ export default defineNuxtConfig({
           '@css-render/vue3-ssr',
           '@nuxtjs/i18n',
           '@juggle/resize-observer',
+          '@nuxtjs/dotenv',
         ]
       : ['@nuxtjs/i18n', '@juggle/resize-observer'],
+  },
+  alias: {
+    '~scss': resolve(__dirname, 'assets/scss'),
   },
   vite: {
     optimizeDeps: {
@@ -109,7 +136,7 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@import "@/assets/scss/main.scss";',
+          additionalData: `@use "~scss/variables.scss" as *;`,
         },
       },
     },
@@ -123,6 +150,11 @@ export default defineNuxtConfig({
     public: {
       serverUrl: SERVER_BASE_URL,
       mercadoPagoPublicKey: process.env.MERCADO_PAGO_PUBLIC_KEY,
+      recaptchaSecretKey: process.env.RECAPTCHA_SECRET_KEY,
+      recaptchaKey: process.env.RECAPTCHA_KEY,
+      whatsappNumber: process.env.WHATSAPP_NUMBER,
+      urlLogo: process.env.URL_LOGO,
+      altLogo: process.env.ALT_LOGO,
       gtagId: process.env.GTAG_ID,
       isProd: process.env.NODE_ENV === 'production',
       sentry: {
@@ -131,4 +163,6 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  compatibilityDate: '2024-10-21',
 })

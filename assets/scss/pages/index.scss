@@ -1,3 +1,4 @@
+@use '~scss/variables' as *;
 .home {
   background-color: $home-background;
   padding-bottom: 3rem;
@@ -87,11 +88,15 @@
 
     .carousel-slide {
       width: 100%;
-      height: 20rem;
+      height: 40rem; // Para dispositivos móveis
       display: block;
       background-position: center center;
       background-repeat: no-repeat;
-      background-size: cover;
+      background-size: contain;
+    }
+
+    @media (min-width: 640px) {
+      display: none; // Esconde o carousel a partir de 640px
     }
   }
 }

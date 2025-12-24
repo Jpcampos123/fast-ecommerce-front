@@ -7,6 +7,8 @@
   const head = useLocaleHead({
     addSeoAttributes: true,
   })
+  const Logo = config.public.urlLogo
+  const AltLogo = config.public.urlAltLogo
 </script>
 
 <template>
@@ -28,9 +30,9 @@
         <n-notification-provider>
           <header class="header">
             <div class="header__top">
-              <div class="logo">
-                <img src="~/assets/logo-gold.png" alt="Gatto Rosa" />
-              </div>
+              <NuxtLink to="/" class="logo">
+                <img :src="Logo" :alt="AltLogo" />
+              </NuxtLink>
             </div>
           </header>
           <slot />
@@ -41,7 +43,7 @@
 </template>
 
 <style lang="scss">
-  @import '@/assets/scss/main.scss';
+  @use '@/assets/scss/main.scss' as *;
 
   .header {
     background-color: #000000;

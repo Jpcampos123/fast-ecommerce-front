@@ -7,12 +7,15 @@
     useRouter,
     useRuntimeConfig,
     watch,
+    useCookie,
   } from '#imports'
-  import { ProductCard, ProductSkeleton } from '~/components/shared'
+  import { ProductSkeleton } from '~/components/shared'
   import { getPageFromRoute } from '~/utils/helpers'
   import type { PaginatedProducts } from '~/utils/types'
 
   const { serverUrl } = useRuntimeConfig().public
+  const locale = useCookie('i18n_redirected').value || 'pt-BR'
+  const currency = detectCurrencyByLocale(locale)
   const route = useRoute()
   const router = useRouter()
   const OFFSET = 12
@@ -20,8 +23,8 @@
   const { page } = getPageFromRoute()
   const url = computed(() =>
     route.params.uri === 'latest'
-      ? `${serverUrl}/catalog/latest`
-      : `${serverUrl}/catalog/category/products/${route.params.uri}`,
+      ? `${serverUrl}/catalog/latest?currency=${currency}`
+      : `${serverUrl}/catalog/category/products/${route.params.uri}?currency=${currency}`,
   )
 
   const categoryTitle = computed(() => {
@@ -105,10 +108,11 @@
     <div v-else-if="products.length === 0" class="category__empty">
       <p>{{ t(`categoryPage.empty`) }}</p>
     </div>
-    <div v-else class="category__products">
-      <div v-for="product in products" :key="product.product_id">
-        <ProductCard v-bind="{ product }" @add-to-cart="handleAddToCart" />
-      </div>
+    <div v-else>
+      <ProductCardImg
+        :latest-products="products"
+        :on-add-to-cart="handleAddToCart"
+      />
     </div>
     <n-space align="flex-end" vertical class="category__pagination">
       <n-pagination v-model:page="page" :page-count="totalPages" size="large" />
@@ -117,5 +121,5 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/assets/scss/pages/category.scss';
+  @use '@/assets/scss/pages/category.scss' as *;
 </style>

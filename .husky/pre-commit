@@ -1,5 +1,8 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#!/bin/sh
+set -e
+echo "Running Husky pre-commit..."
 
 npm test
+
 npx lint-staged
+echo "Husky pre-commit finished successfully!"

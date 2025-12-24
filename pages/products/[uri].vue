@@ -12,16 +12,21 @@
     useRouter,
     useRuntimeConfig,
   } from '#imports'
-  import type { ProductItem } from '~/utils/types'
+  import type { MediaItem, ProductItem } from '~/utils/types'
 
   const route = useRoute()
   const router = useRouter()
   const config = useRuntimeConfig()
   const { t, locale } = useI18n()
   const cartStore = useCartStore()
+  const isAutoplay = ref(true)
 
   const { data: product, error } = await useFetch<ProductItem>(
     `${config.public.serverUrl}/product/uri/${route.params.uri}`,
+  )
+
+  const { data: carousel } = await useFetch<MediaItem[]>(
+    `${config.public.serverUrl}/product/media/${product.value?.uri}`,
   )
 
   const productValue = unref(product)
@@ -83,12 +88,54 @@
   }
 
   const isPtBr = computed(() => locale.value === LOCALES.PT_BR)
+
+  function handleVideoPlay() {
+    isAutoplay.value = false
+  }
+
+  function handleVideoEnded() {
+    isAutoplay.value = true
+  }
 </script>
 
 <template>
   <main v-if="product" class="product">
     <div class="product__info">
+      <n-carousel
+        v-if="carousel && carousel.length > 0"
+        :autoplay="isAutoplay"
+        class="carousel-custom"
+      >
+        <n-carousel-item
+          v-for="(media, index) in carousel"
+          :key="media.media_id"
+        >
+          <div class="carousel-media-wrapper">
+            <div v-if="media.type === 'PHOTO'">
+              <img
+                class="product__info--image"
+                :src="media.uri"
+                :alt="`${t('productItem.productImg')} ${index + 1}`"
+              />
+            </div>
+
+            <div v-else-if="media.type === 'VIDEO'">
+              <video
+                class="product__info--video"
+                controls
+                :src="media.uri"
+                :alt="`${t('productItem.productVideo')} ${index + 1}`"
+                @play="handleVideoPlay"
+                @ended="handleVideoEnded"
+                @pause="handleVideoEnded"
+              ></video>
+            </div>
+          </div>
+        </n-carousel-item>
+      </n-carousel>
+
       <img
+        v-else
         class="product__info--image"
         :src="product.image_path"
         :alt="product.name"
@@ -160,9 +207,10 @@
       <h2 class="product__description--title">
         {{ product.name }}
       </h2>
-      <p class="product__description--text">
-        {{ product?.description?.content }}
-      </p>
+      <p
+        class="product__description--text"
+        v-html="product?.description?.content"
+      ></p>
     </div>
     <n-collapse
       v-if="product.description"
@@ -175,9 +223,10 @@
         name="1"
         class="product__description--collapse-item"
       >
-        <p class="product__description--text">
-          {{ product?.description?.composition }}
-        </p>
+        <p
+          class="product__description--text"
+          v-html="product?.description?.composition"
+        ></p>
       </n-collapse-item>
       <n-collapse-item
         v-if="product?.description?.how_to_use"
@@ -185,14 +234,15 @@
         name="2"
         class="product__description--collapse-item"
       >
-        <p class="product__description--text-white-space">
-          {{ product?.description?.how_to_use }}
-        </p>
+        <p
+          class="product__description--text-white-space"
+          v-html="product?.description?.how_to_use"
+        ></p>
       </n-collapse-item>
     </n-collapse>
   </main>
 </template>
 
 <style lang="scss" scoped>
-  @import '@/assets/scss/pages/products/product.scss';
+  @use '@/assets/scss/pages/products/product.scss' as *;
 </style>

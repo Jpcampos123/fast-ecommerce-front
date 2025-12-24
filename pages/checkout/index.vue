@@ -252,7 +252,7 @@
           <n-radio value="credit-card">
             {{ t('checkout.payment.credit_card') }}
           </n-radio>
-          <n-radio v-if="locale === 'pt-br'" value="pix"> Pix </n-radio>
+          <n-radio v-if="locale === 'pt-BR'" value="pix"> Pix </n-radio>
         </n-radio-group>
       </div>
 
@@ -321,5 +321,5 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/assets/scss/pages/checkout.scss';
+  @use '@/assets/scss/pages/checkout.scss' as *;
 </style>

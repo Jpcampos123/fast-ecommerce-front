@@ -1,11 +1,24 @@
+import {
+  ref,
+  useRuntimeConfig,
+  useFetch,
+  unref,
+  onMounted,
+  storeToRefs,
+  useCartStore,
+} from '#imports'
+import type { Cart, CartItem } from '@/utils/types'
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IDataCart extends Cart {}
 
 export function useEstimate() {
+  const config = useRuntimeConfig()
   const pending = ref(false)
   const fetching = ref(false)
-  const data = ref<IDataCart>()
+  const data = ref<IDataCart | null>(null)
   const error = ref<string | null>(null)
-
+  const serverUrl = config.public.serverUrl
   const cartStore = useCartStore()
   const { cart, coupon, affiliate } = storeToRefs(cartStore)
   const cartItems = cart.value.cart_items
@@ -19,7 +32,7 @@ export function useEstimate() {
 
       const headers = {
         'content-type': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Origin': serverUrl,
       }
 
       const uuid = unref(cart).uuid
@@ -36,8 +49,8 @@ export function useEstimate() {
             total: cart.value.total,
             zipcode: cart.value.zipcode,
             freight_product_code: cart.value.freight_product_code,
-            coupon,
-            affiliate,
+            coupon: coupon.value,
+            affiliate: affiliate.value,
           },
         },
       )
@@ -46,9 +59,11 @@ export function useEstimate() {
 
       if (unref(fetchError)) {
         error.value = unref(fetchError)?.data.message
+        pending.value = false
+        return null
       }
 
-      if (responseDataValue && responseDataValue?.cart_items) {
+      if (responseDataValue && responseDataValue.cart_items) {
         data.value = responseDataValue
         error.value = null
       } else {
@@ -56,16 +71,19 @@ export function useEstimate() {
       }
 
       pending.value = false
+      return responseDataValue
     } catch (err) {
       error.value = (err as Error).message
       pending.value = false
+      return null
     }
   }
 
   async function refresh(cartItems: CartItem[] = filteredCartItems) {
     fetching.value = true
-    await execute(cartItems)
+    const res = await execute(cartItems)
     fetching.value = false
+    return res
   }
 
   onMounted(() => execute(filteredCartItems))

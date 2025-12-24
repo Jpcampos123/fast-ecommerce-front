@@ -1,3 +1,6 @@
+import { ref, useRuntimeConfig, useFetch, unref, onMounted } from '#imports'
+import type { Order, CartItem } from '@/utils/types'
+
 interface IDataOrder {
   cancelledAt: string | null
   cancelledReason: string | null
@@ -21,10 +24,10 @@ export function useOrders(userId: string) {
       pending.value = true
 
       const { data: responseData } = await useFetch<Order[] | undefined>(
-        `${serverUrl}/order/${userId}`,
+        `${serverUrl}/order/user/${userId}`,
       )
 
-      const responseDataValue = unref(responseData)
+      const responseDataValue = unref(responseData) as Order[]
       if (responseDataValue) {
         data.value = responseDataValue.map((order) => ({
           cancelledAt: order.cancelled_at,

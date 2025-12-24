@@ -17,6 +17,7 @@ import {
   useCookie,
   useFetch,
   useNuxtApp,
+  useRuntimeConfig,
   type CreditCard,
 } from '#imports'
 import type { AddPixPaymentMehodResponse } from '~/types/cart'
@@ -89,6 +90,9 @@ export const useCartStore = defineStore('cart', () => {
       email: '',
       phone: '',
       document: '',
+      fullName: '',
+      role: null,
+      addresses: [],
     },
   })
 
@@ -417,7 +421,9 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  async function addMercadoPagoCreditCardPayment(payment: CreditCardPayment) {
+  async function addMercadoPagoCreditCardPayment(
+    payment: CreditCardPayment | StripeCreditCardPayment,
+  ) {
     try {
       const uuid = cart.value.uuid
       if (!uuid) {
@@ -430,7 +436,7 @@ export const useCartStore = defineStore('cart', () => {
       }
 
       const { data, error } = await useFetch(
-        `/api/cart/${uuid}/payment/credit_card`,
+        `/api/cart/${uuid}/payment/credit-card`,
         {
           method: 'POST',
           headers,
@@ -531,7 +537,7 @@ export const useCartStore = defineStore('cart', () => {
         return
       }
 
-      const responseData = unref(data) as {
+      const responseData = unref(data) as unknown as {
         status: string
         message: string
         order_id: string
@@ -776,11 +782,13 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   async function estimate() {
+    const config = useRuntimeConfig()
+    const serverUrl = config.public.serverUrl
     try {
       loading.value = true
       const headers = {
         'content-type': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Origin': serverUrl,
       }
 
       const { data, error } = await useFetch(

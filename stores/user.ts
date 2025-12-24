@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref } from '#imports'
+import { ref, useFetch, unref } from '#imports'
+import type { User } from '@/utils/types'
 
 interface IDataUser {
   name: string
@@ -23,7 +24,7 @@ export const useUserStore = defineStore('user', () => {
       '/api/auth/user',
     )
 
-    const responseDataValue = unref(responseData)
+    const responseDataValue = unref(responseData) as User
 
     if (unref(error)) {
       pending.value = false
@@ -40,7 +41,7 @@ export const useUserStore = defineStore('user', () => {
         phone: responseDataValue.phone,
         fullName: responseDataValue.fullName,
         role: responseDataValue.role,
-        userId: responseDataValue.user_id,
+        userId: responseDataValue.user_id?.toString() || '',
       }
       authenticated.value = true
     }

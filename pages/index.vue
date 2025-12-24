@@ -1,38 +1,35 @@
 <script lang="ts" setup>
-  import {
-    computed,
-    useAsyncData,
-    useFetch,
-    useI18n,
-    useRuntimeConfig,
-  } from '#imports'
-  import { ProductCard } from '@/components/shared'
-  import { FeatureCard, FeatureHero } from '~/components/home'
-  import ProductImage from '@/assets/images/product-item-example.jpeg'
-  import { useProductsStore } from '~/stores/products'
+  import { computed, useFetch, useI18n, useRuntimeConfig } from '#imports'
+  import { FeatureHero } from '~/components/home'
   import type { FeatureItem, ProductItem } from '~/utils/types'
   import { useCategoryStore } from '~/stores/categories'
+  import type { Carousel } from '~/types/products'
 
   useHead({
     title: 'Home',
   })
 
   const { t, te } = useI18n()
-  const store = useProductsStore()
 
   const categoryStore = useCategoryStore()
   const cartStore = useCartStore()
   const router = useRouter()
   const serverUrl = useRuntimeConfig().public.serverUrl
+  const locale = useCookie('i18n_redirected').value || 'pt-BR'
+  const currency = detectCurrencyByLocale(locale)
 
-  const { data: carousel } = await useAsyncData(() =>
-    store.getProductsShowcase(),
+  await categoryStore.getCategorys(true)
+
+  const { data: carousel } = await useFetch<Carousel[]>(
+    `${serverUrl}/product/media/teste-banner`,
   )
+
   const { data: featured } = await useFetch<{ products: ProductItem[] }>(
-    `${serverUrl}/catalog/featured`,
+    `${serverUrl}/catalog/featured?currency=${currency}`,
   )
+
   const { data: latest } = await useFetch<{ products: ProductItem[] }>(
-    `${serverUrl}/catalog/latest`,
+    `${serverUrl}/catalog/latest?currency=${currency}`,
   )
 
   const productToFeature = ({
@@ -53,6 +50,7 @@
 
   const categories = computed(() =>
     categoryStore.categories
+      .filter((category) => category.showcase === true)
       .filter(({ name }) => !['news', 'sales'].includes(name))
       .slice(0, 3)
       .map((category) => ({
@@ -64,16 +62,12 @@
       })),
   )
 
-  const carouselBackground = (image?: string) => ({
-    backgroundImage: `url('${image ?? ProductImage}')`,
-  })
-
   const latestProducts = computed(() => {
     if (!latest.value) {
       return []
     }
 
-    return latest.value.products.slice(0, 4)
+    return latest.value.products.slice(0, 5)
   })
 
   async function handleAddToCart(product: ProductItem) {
@@ -97,40 +91,28 @@
 
 <template>
   <main class="home">
-    <div
-      v-if="carousel && carousel.length > 0"
-      class="home__carousel container"
-    >
-      <n-carousel show-arrow autoplay draggable>
-        <NuxtLink
-          v-for="(product, index) in carousel"
-          :key="index"
-          :style="carouselBackground(product.image_path)"
-          :to="`/products/${product.uri}`"
-          class="carousel-slide"
-        />
-      </n-carousel>
+    <div>
+      <ProductsShowCase :carousel="carousel ?? []" />
     </div>
     <div v-if="latestProducts.length > 0" class="home__news">
       <h2>{{ t('home.news.title') }}</h2>
-      <div class="home__news-list">
-        <ProductCard
-          v-for="product in latestProducts"
-          :key="product.product_id"
-          :product="product"
-          @add-to-cart="handleAddToCart"
-        />
-      </div>
+      <div class="home__news-list"></div>
+      <ProductCardImg
+        :latest-products="latestProducts"
+        :on-add-to-cart="handleAddToCart"
+      />
     </div>
+
     <div v-if="categories.length > 0" class="home__features container">
       <div
         v-for="category in categories"
         :key="category.uri"
         class="home__features-item"
       >
-        <FeatureCard :item="category" />
+        <CategoryCard :item="category" />
       </div>
     </div>
+
     <div v-if="featuredProducts?.length > 0" class="home__heros container">
       <FeatureHero
         v-for="(product, index) in featuredProducts"
@@ -143,5 +125,5 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/assets/scss/pages/index.scss';
+  @use '@/assets/scss/pages/index.scss' as *;
 </style>
